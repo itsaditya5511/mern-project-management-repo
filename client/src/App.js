@@ -13,6 +13,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* 🔐 AUTH ROUTES */}
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -55,6 +56,9 @@ function App() {
             </PrivateRoute>
           }
         />
+
+        {/* 🚀 DEFAULT REDIRECT (FIXES UNUSED Navigate ERROR + UX) */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );
