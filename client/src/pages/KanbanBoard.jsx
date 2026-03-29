@@ -160,7 +160,6 @@ export default function KanbanBoard() {
   const [columns, setColumns] = useState([]);
   const [newColumn, setNewColumn] = useState("");
 
-  // ✅ FIX: wrap in useCallback
   const fetchTasks = useCallback(async () => {
     const res = await API.get(`/tasks/${id}`);
     setTasks(res.data);
@@ -181,14 +180,16 @@ export default function KanbanBoard() {
     }
   }, [id]);
 
-  // ✅ FIXED useEffect
   useEffect(() => {
     fetchTasks();
     fetchColumns();
 
     socket.on("taskUpdated", fetchTasks);
-    return () => socket.off("taskUpdated");
-  }, [fetchTasks, fetchColumns]);
+
+    return () => {
+      socket.off("taskUpdated", fetchTasks);
+    };
+  }, [fetchTasks, fetchColumns]); // ✅ clean
 
   const createColumn = async () => {
     if (!newColumn) return;
