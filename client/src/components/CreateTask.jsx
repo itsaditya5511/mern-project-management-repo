@@ -1,7 +1,6 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import API from "../services/api";
 import { TextField, Button, MenuItem } from "@mui/material";
-import { AuthContext } from "../context/AuthContext";
 
 export default function CreateTask({ projectId, refresh }) {
   const [title, setTitle] = useState("");
@@ -13,8 +12,6 @@ export default function CreateTask({ projectId, refresh }) {
   const [labels, setLabels] = useState("");
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  const { darkMode } = useContext(AuthContext);
 
   // ================================
   // 🔥 FETCH USERS + COLUMNS
@@ -49,7 +46,7 @@ export default function CreateTask({ projectId, refresh }) {
   }, [projectId]);
 
   // ================================
-  // 📝 CREATE TASK (MULTER VERSION)
+  // 📝 CREATE TASK
   // ================================
   const createTask = async () => {
     if (!title.trim()) return alert("Enter task title");
@@ -64,17 +61,14 @@ export default function CreateTask({ projectId, refresh }) {
 
       const formData = new FormData();
 
-      // ✅ REQUIRED FIELDS
       formData.append("title", title.trim());
       formData.append("projectId", projectId);
       formData.append("columnId", columnId);
       formData.append("priority", "medium");
 
-      // ✅ OPTIONAL FIELDS
       if (assignedTo) formData.append("assignedTo", assignedTo);
       if (dueDate) formData.append("dueDate", dueDate);
 
-      // ✅ LABELS (convert to string)
       formData.append(
         "labels",
         JSON.stringify(
@@ -82,12 +76,9 @@ export default function CreateTask({ projectId, refresh }) {
         )
       );
 
-      // ✅ FILE (MAIN PART)
       if (file) {
         formData.append("file", file);
       }
-
-      console.log("Uploading file:", file);
 
       await API.post("/tasks", formData, {
         headers: {
@@ -115,7 +106,6 @@ export default function CreateTask({ projectId, refresh }) {
   return (
     <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
       
-      {/* TITLE */}
       <TextField
         label="Task Title"
         value={title}
@@ -123,7 +113,6 @@ export default function CreateTask({ projectId, refresh }) {
         size="small"
       />
 
-      {/* COLUMN */}
       {columns.length > 0 && (
         <TextField
           select
@@ -140,7 +129,6 @@ export default function CreateTask({ projectId, refresh }) {
         </TextField>
       )}
 
-      {/* ASSIGN */}
       {users.length > 0 && (
         <TextField
           select
@@ -158,7 +146,6 @@ export default function CreateTask({ projectId, refresh }) {
         </TextField>
       )}
 
-      {/* DATE */}
       <TextField
         type="date"
         size="small"
@@ -166,7 +153,6 @@ export default function CreateTask({ projectId, refresh }) {
         onChange={(e) => setDueDate(e.target.value)}
       />
 
-      {/* LABELS */}
       <TextField
         label="Labels"
         size="small"
@@ -174,7 +160,6 @@ export default function CreateTask({ projectId, refresh }) {
         onChange={(e) => setLabels(e.target.value)}
       />
 
-      {/* FILE INPUT */}
       <div>
         <input
           type="file"
@@ -187,7 +172,6 @@ export default function CreateTask({ projectId, refresh }) {
         )}
       </div>
 
-      {/* BUTTON */}
       <Button onClick={createTask} disabled={loading}>
         {loading ? "Uploading..." : "+ Add Task"}
       </Button>

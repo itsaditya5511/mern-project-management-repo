@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import API from "../services/api";
 import { useParams } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
@@ -40,12 +40,10 @@ function TaskItem({ task, darkMode }) {
         marginBottom: "10px",
       }}
     >
-      {/* 📝 TITLE */}
       <h6 style={{ color: darkMode ? "#fff" : "#000" }}>
         {task.title}
       </h6>
 
-      {/* ⚡ PRIORITY */}
       {task.priority && (
         <span
           style={{
@@ -65,21 +63,18 @@ function TaskItem({ task, darkMode }) {
         </span>
       )}
 
-      {/* 👤 ASSIGNED USER */}
       {task.assignedTo && (
         <p style={{ fontSize: "12px", color: "#38bdf8", marginTop: "5px" }}>
           👤 {task.assignedTo.name || task.assignedTo.email}
         </p>
       )}
 
-      {/* 📅 DUE DATE */}
       {task.dueDate && (
         <p style={{ fontSize: "12px", color: "#f87171" }}>
           📅 {new Date(task.dueDate).toLocaleDateString()}
         </p>
       )}
 
-      {/* 🏷 LABELS */}
       <div style={{ marginTop: "5px" }}>
         {task.labels?.map((label, i) => (
           <span
@@ -98,14 +93,12 @@ function TaskItem({ task, darkMode }) {
         ))}
       </div>
 
-      {/* 📎 ATTACHMENT */}
       {task.attachment && (
         <p style={{ fontSize: "12px", color: "#22c55e" }}>
           📎 {task.attachment}
         </p>
       )}
 
-      {/* 📝 ACTIVITY */}
       {task.activityLogs?.length > 0 && (
         <p style={{ fontSize: "10px", color: "#94a3b8", marginTop: "5px" }}>
           📝 {task.activityLogs[task.activityLogs.length - 1].message}
@@ -113,7 +106,6 @@ function TaskItem({ task, darkMode }) {
       )}
     </motion.div>
   );
-
 }
 
 // ================================
@@ -168,23 +160,15 @@ export default function KanbanBoard() {
   const [columns, setColumns] = useState([]);
   const [newColumn, setNewColumn] = useState("");
 
-  useEffect(() => {
-    fetchTasks();
-    fetchColumns();
-
-    socket.on("taskUpdated", fetchTasks);
-    return () => socket.off("taskUpdated");
-  }, [id]);
-
-  const fetchTasks = async () => {
+  // ✅ FIX: wrap in useCallback
+  const fetchTasks = useCallback(async () => {
     const res = await API.get(`/tasks/${id}`);
     setTasks(res.data);
-  };
+  }, [id]);
 
-  const fetchColumns = async () => {
+  const fetchColumns = useCallback(async () => {
     const res = await API.get(`/columns/${id}`);
 
-    // ✅ AUTO CREATE COLUMN IF NONE
     if (!res.data || res.data.length === 0) {
       const newCol = await API.post("/columns", {
         name: "Todo",
@@ -195,9 +179,17 @@ export default function KanbanBoard() {
     } else {
       setColumns(res.data);
     }
-  };
+  }, [id]);
 
-  // ➕ CREATE COLUMN
+  // ✅ FIXED useEffect
+  useEffect(() => {
+    fetchTasks();
+    fetchColumns();
+
+    socket.on("taskUpdated", fetchTasks);
+    return () => socket.off("taskUpdated");
+  }, [fetchTasks, fetchColumns]);
+
   const createColumn = async () => {
     if (!newColumn) return;
 
@@ -210,24 +202,20 @@ export default function KanbanBoard() {
     fetchColumns();
   };
 
-  // 🔄 DRAG DROP
   const handleDragEnd = async ({ active, over }) => {
     if (!over) return;
 
-    const columnId = over.id;
-
     try {
       await API.put(`/tasks/${active.id}/move`, {
-        columnId,
+        columnId: over.id,
       });
 
       socket.emit("taskMoved", {
         taskId: active.id,
-        columnId,
+        columnId: over.id,
       });
 
-      fetchTasks(); // ✅ FIX UI instantly
-
+      fetchTasks();
     } catch (err) {
       console.error(err);
     }
@@ -243,7 +231,6 @@ export default function KanbanBoard() {
         <div style={{ padding: "20px" }}>
           <CreateTask projectId={id} refresh={fetchTasks} />
 
-          {/* ➕ ADD COLUMN */}
           <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
             <input
               placeholder="New column..."

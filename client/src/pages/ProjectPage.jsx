@@ -7,21 +7,24 @@ import { AuthContext } from "../context/AuthContext";
 import { motion } from "framer-motion";
 
 export default function ProjectPage() {
-  const { id } = useParams(); // workspaceId
+  const { id } = useParams();
   const [projects, setProjects] = useState([]);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [myRole, setMyRole] = useState("");
 
   const navigate = useNavigate();
-  const { darkMode, user } = useContext(AuthContext);
+  const { user } = useContext(AuthContext); // ✅ removed darkMode
 
+  // ================================
+  // FETCH PROJECTS + ROLE
+  // ================================
   useEffect(() => {
     if (id) {
       fetchProjects();
       fetchMyRole();
     }
-  }, [id]);
+  }, [id, user]); // ✅ fixed dependency warning
 
   const fetchProjects = async () => {
     try {
@@ -120,7 +123,7 @@ export default function ProjectPage() {
 
           {/* PROJECT GRID */}
           <div className="row">
-            {projects.map((p, index) => (
+            {projects.map((p) => (
               <div key={p._id} className="col-md-4 mb-4">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
