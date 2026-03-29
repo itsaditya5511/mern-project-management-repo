@@ -25,7 +25,7 @@ import { motion } from "framer-motion";
 export default function Login() {
   const [data, setData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const [darkMode, setDarkMode] = useState(false); // ✅ default light
+  const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { login } = useContext(AuthContext);
@@ -45,9 +45,14 @@ export default function Login() {
         password: data.password,
       });
 
+      // ✅ Safety check
+      if (!res.data || !res.data.user) {
+        throw new Error("Invalid response from server");
+      }
+
       login(res.data);
 
-      const role = res.data.user.role;
+      const role = res.data.user?.role;
 
       if (role === "admin") {
         navigate("/analytics");
@@ -56,7 +61,13 @@ export default function Login() {
       }
 
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
+      console.error("LOGIN ERROR:", error);
+
+      alert(
+        error.response?.data?.message ||
+        error.message ||
+        "Login failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -69,12 +80,9 @@ export default function Login() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-
-        // ✅ LIGHT vs DARK BACKGROUND
         background: darkMode
           ? "linear-gradient(135deg, #020617, #0f172a)"
           : "linear-gradient(135deg, #e0f2fe, #ffffff)",
-
         transition: "0.5s",
       }}
     >
@@ -94,10 +102,7 @@ export default function Login() {
         {darkMode ? "☀️ Light" : "🌙 Dark"}
       </button>
 
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}>
         <Card
           style={{
             width: "380px",
@@ -112,19 +117,11 @@ export default function Login() {
           }}
         >
           <CardContent>
-            <Typography
-              variant="h4"
-              align="center"
-              gutterBottom
-              style={{ fontWeight: "bold" }}
-            >
+            <Typography variant="h4" align="center" gutterBottom style={{ fontWeight: "bold" }}>
               Welcome Back 👋
             </Typography>
 
-            <Typography
-              align="center"
-              style={{ marginBottom: "20px", opacity: 0.7 }}
-            >
+            <Typography align="center" style={{ marginBottom: "20px", opacity: 0.7 }}>
               Login to continue
             </Typography>
 
@@ -192,11 +189,8 @@ export default function Login() {
               {loading ? "Logging in..." : "Login"}
             </Button>
 
-            {/* 🔥 SIGN UP LINK */}
-            <Typography
-              align="center"
-              style={{ marginTop: "15px", fontSize: "14px" }}
-            >
+            {/* SIGN UP */}
+            <Typography align="center" style={{ marginTop: "15px", fontSize: "14px" }}>
               New here?{" "}
               <span
                 onClick={() => navigate("/register")}
