@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import API from "../services/api";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
@@ -14,28 +14,19 @@ export default function ProjectPage() {
   const [myRole, setMyRole] = useState("");
 
   const navigate = useNavigate();
-  const { user } = useContext(AuthContext); // ✅ removed darkMode
+  const { user } = useContext(AuthContext);
 
-  // ================================
-  // FETCH PROJECTS + ROLE
-  // ================================
-  useEffect(() => {
-    if (id) {
-      fetchProjects();
-      fetchMyRole();
-    }
-  }, [id, user]); // ✅ fixed dependency warning
-
-  const fetchProjects = async () => {
+  // ✅ FIX: wrap with useCallback
+  const fetchProjects = useCallback(async () => {
     try {
       const res = await API.get(`/projects/${id}`);
       setProjects(res.data);
     } catch (err) {
       console.error("FETCH PROJECT ERROR:", err.response?.data || err);
     }
-  };
+  }, [id]);
 
-  const fetchMyRole = async () => {
+  const fetchMyRole = useCallback(async () => {
     try {
       const res = await API.get(`/workspace/${id}/members`);
 
@@ -47,7 +38,15 @@ export default function ProjectPage() {
     } catch (err) {
       console.error("ROLE FETCH ERROR:", err.response?.data || err);
     }
-  };
+  }, [id, user]);
+
+  // ✅ FIXED useEffect
+  useEffect(() => {
+    if (id) {
+      fetchProjects();
+      fetchMyRole();
+    }
+  }, [id, fetchProjects, fetchMyRole]);
 
   const createProject = async () => {
     if (myRole === "member") {
@@ -82,7 +81,6 @@ export default function ProjectPage() {
         <Navbar />
 
         <div className="container-fluid p-4">
-          {/* HEADER */}
           <div className="mb-4">
             <h2 className="fw-bold">🚀 Projects Workspace</h2>
             <p className="text-muted">
@@ -90,7 +88,6 @@ export default function ProjectPage() {
             </p>
           </div>
 
-          {/* CREATE PROJECT */}
           {myRole !== "member" ? (
             <div className="card p-3 mb-4 shadow-sm">
               <div className="row g-2">
@@ -121,7 +118,6 @@ export default function ProjectPage() {
             </div>
           )}
 
-          {/* PROJECT GRID */}
           <div className="row">
             {projects.map((p) => (
               <div key={p._id} className="col-md-4 mb-4">
@@ -142,7 +138,6 @@ export default function ProjectPage() {
             ))}
           </div>
 
-          {/* EMPTY STATE */}
           {projects.length === 0 && (
             <div className="text-center mt-5">
               <h4>No Projects Yet 😅</h4>
