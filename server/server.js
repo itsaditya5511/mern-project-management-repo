@@ -47,8 +47,9 @@ const server = http.createServer(app);
 // ✅ SOCKET FIX
 const io = new Server(server, {
   cors: {
-    origin: FRONTEND_URL,
-    methods: ["GET", "POST"]
+    origin: "https://mern-project-management-repo.vercel.app",
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 

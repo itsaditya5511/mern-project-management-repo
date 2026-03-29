@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://mern-project-management-repo.onrender.com",
+  baseURL: "https://mern-project-management-repo.onrender.com/api",
 });
 
 // ==============================
